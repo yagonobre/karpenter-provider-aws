@@ -183,6 +183,15 @@ func (p *Provider) CreateTags(ctx context.Context, id string, tags map[string]st
 	return nil
 }
 
+func spotOptions(nodeClass *v1beta1.EC2NodeClass) *ec2.SpotOptionsRequest {
+	spotAllocationStrategy := aws.String(ec2.SpotAllocationStrategyPriceCapacityOptimized)
+	if nodeClass.Spec.AllocationStrategy != nil && nodeClass.Spec.AllocationStrategy.Spot != nil {
+		spotAllocationStrategy = nodeClass.Spec.AllocationStrategy.Spot
+	}
+
+	return &ec2.SpotOptionsRequest{AllocationStrategy: spotAllocationStrategy}
+}
+
 func (p *Provider) launchInstance(ctx context.Context, nodeClass *v1beta1.EC2NodeClass, nodeClaim *corev1beta1.NodeClaim, instanceTypes []*cloudprovider.InstanceType, tags map[string]string) (*ec2.CreateFleetInstance, error) {
 	capacityType := p.getCapacityType(nodeClaim, instanceTypes)
 	zonalSubnets, err := p.subnetProvider.ZonalSubnetsForLaunch(ctx, nodeClass, instanceTypes, capacityType)
@@ -214,7 +223,7 @@ func (p *Provider) launchInstance(ctx context.Context, nodeClass *v1beta1.EC2Nod
 		},
 	}
 	if capacityType == corev1beta1.CapacityTypeSpot {
-		createFleetInput.SpotOptions = &ec2.SpotOptionsRequest{AllocationStrategy: aws.String(ec2.SpotAllocationStrategyPriceCapacityOptimized)}
+		createFleetInput.SpotOptions = spotOptions(nodeClass)
 	} else {
 		createFleetInput.OnDemandOptions = &ec2.OnDemandOptionsRequest{AllocationStrategy: aws.String(ec2.FleetOnDemandAllocationStrategyLowestPrice)}
 	}

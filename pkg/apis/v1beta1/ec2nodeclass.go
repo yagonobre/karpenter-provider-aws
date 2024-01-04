@@ -112,6 +112,9 @@ type EC2NodeClassSpec struct {
 	// https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CreateFleet.html
 	// +optional
 	Context *string `json:"context,omitempty"`
+	// AllocationStrategy is the strategy for allocating capacity across Spot and On-Demand Instances in a single launch template.
+	// +optional
+	AllocationStrategy *AllocationStrategy `json:"allocationStrategy,omitempty"`
 }
 
 // SubnetSelectorTerm defines selection logic for a subnet used by Karpenter to launch nodes.
@@ -309,6 +312,13 @@ const (
 	// pods that request ephemeral storage and container images that are downloaded to the node.
 	InstanceStorePolicyRAID0 InstanceStorePolicy = "RAID0"
 )
+
+type AllocationStrategy struct {
+	// Spot is the Allocation strategy used to provision Spot Instances.
+	// +kubebuilder:validation:Enum={price-capacity-optimized,capacity-optimized,diversified, lowest-price}
+	// +optional
+	Spot *string `json:"spot,omitempty"`
+}
 
 // EC2NodeClass is the Schema for the EC2NodeClass API
 // +kubebuilder:object:root=true
